@@ -42,6 +42,7 @@ footer a{color:#111;font-weight:700}
 let all=[],onlyAvail=false;
 async function load(){all=[];for(let i=0;i<6;i++){const r=await fetch('products-'+i+'.json');all=all.concat(await r.json());}all.sort((a,b)=>a.n-b.n);render();}
 function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function fixImg(el){if(el.dataset.fixed)return;el.dataset.fixed='1';fetch(el.getAttribute('src')).then(r=>r.text()).then(t=>{t=t.trim();if(!/^[A-Za-z0-9+/=]+$/.test(t))return;const bin=atob(t);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);el.src=URL.createObjectURL(new Blob([bytes],{type:'image/webp'}));}).catch(()=>{});}
 function render(){
  const q=(document.getElementById('q').value||'').toLowerCase().trim();
  const c=document.getElementById('cat').value;
@@ -55,7 +56,7 @@ function render(){
  document.getElementById('count').textContent=list.length+' productos · '+all.filter(p=>!p.sold).length+' disponibles';
  document.getElementById('grid').innerHTML=list.map(p=>`
   <article class="card">
-   ${p.img?`<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy">`:''}
+   ${p.img?`<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" onerror="fixImg(this)">`:''}
    ${p.sold?'<div class="sold">VENDIDO</div>':''}
    <div class="card-body">
     <div class="cat">${esc(p.brand||p.category)}</div>
