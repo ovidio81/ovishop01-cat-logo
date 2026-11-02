@@ -22,6 +22,10 @@ header{padding:18px 14px 8px;text-align:center}h1{margin:0;font-size:26px}header
 .note{font-size:13px;color:#0a6b2e;font-weight:700}
 .wa{display:block;text-align:center;background:#25d366;color:#fff;text-decoration:none;font-weight:800;padding:11px;border-radius:10px;margin-top:10px}
 .wa.disabled{background:#999;pointer-events:none}
+.share{display:block;width:100%;text-align:center;background:#fff;color:#111;border:1px solid #ccc;font-weight:700;padding:9px;border-radius:10px;margin-top:8px;cursor:pointer}
+.used{position:absolute;top:10px;left:10px;background:#c9a227;color:#111;font-weight:900;padding:7px 10px;border-radius:8px;border:2px solid #fff;font-size:13px}
+.controls{position:sticky;top:0;background:#f6f6f6;z-index:5;padding-top:10px}
+.wa-float{position:fixed;right:16px;bottom:16px;background:#25d366;color:#fff;text-decoration:none;font-weight:800;padding:13px 18px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.3);z-index:10}
 .sold{position:absolute;top:10px;right:10px;background:#d00;color:#fff;font-weight:900;padding:7px 10px;border-radius:8px;transform:rotate(3deg);border:2px solid #fff}
 footer{max-width:1100px;margin:0 auto;padding:0 14px 30px;text-align:center;color:#444}
 footer a{color:#111;font-weight:700}
@@ -36,7 +40,9 @@ footer a{color:#111;font-weight:700}
 <select id="sizeUS"><option value="">Talla US (todas)</option></select>
 <select id="sizeEU"><option value="">Talla EU (todas)</option></select>
 <button id="avail">Solo disponibles</button>
+<button id="clear">Limpiar filtros</button>
 </div>
+<a class="wa-float" href="https://wa.me/17868180740" target="_blank" rel="noopener">Escríbenos 💬</a>
 <div id="count"></div>
 <div class="grid" id="grid"></div>
 <footer><p>¿No ves lo que buscas? Escríbenos por WhatsApp y te lo buscamos en Miami: <a href="https://wa.me/17868180740">wa.me/17868180740</a></p></footer>
@@ -52,6 +58,7 @@ function fillSizes(){
 }
 async function load(){all=[];for(let i=0;i<6;i++){const r=await fetch('products-'+i+'.json');all=all.concat(await r.json());}all.sort((a,b)=>a.n-b.n);fillSizes();render();}
 function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function shareProduct(n){const p=all.find(x=>x.n===n);if(!p)return;const txt=p.name+' — '+p.price+' · OviShop01 · Envío incluido a Venezuela';if(navigator.share){navigator.share({title:'OviShop01',text:txt,url:'https://ovishop01-cat-logo.vercel.app'}).catch(()=>{});}else{navigator.clipboard.writeText(txt+' https://ovishop01-cat-logo.vercel.app').then(()=>alert('¡Copiado!')).catch(()=>{});}}
 function fixImg(el){if(el.dataset.fixed)return;el.dataset.fixed='1';fetch(el.getAttribute('src')).then(r=>r.text()).then(t=>{t=t.trim();if(!/^[A-Za-z0-9+/=]+$/.test(t))return;const bin=atob(t);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);el.src=URL.createObjectURL(new Blob([bytes],{type:'image/webp'}));}).catch(()=>{});}
 function render(){
  const q=(document.getElementById('q').value||'').toLowerCase().trim();
@@ -71,6 +78,7 @@ function render(){
   <article class="card">
    ${p.img?`<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" onerror="fixImg(this)">`:''}
    ${p.sold?'<div class="sold">VENDIDO</div>':''}
+   ${!p.sold&&(p.specs||[]).join(' ').toLowerCase().includes('usado')?'<div class="used">USADOS</div>':''}
    <div class="card-body">
     <div class="cat">${esc(p.brand||p.category)}</div>
     <h3>${esc(p.name)}</h3>
@@ -79,6 +87,7 @@ function render(){
     <div class="price">${esc(p.price)}</div>
     <div class="note">Envío incluido a Venezuela 🇻🇪</div>
     ${p.sold?'<span class="wa disabled">Vendido — Ya no disponible</span>':`<a class="wa" href="${esc(p.wa)}" target="_blank" rel="noopener">Quiero este — WhatsApp</a>`}
+    <button class="share" onclick="shareProduct(${p.n})">Compartir</button>
    </div>
   </article>`).join('')||'<p>Sin resultados. Prueba otra búsqueda.</p>';
 }
@@ -86,6 +95,7 @@ document.getElementById('q').addEventListener('input',render);
 document.getElementById('cat').addEventListener('change',render);
 document.getElementById('sizeUS').addEventListener('change',render);
 document.getElementById('sizeEU').addEventListener('change',render);
+document.getElementById('clear').addEventListener('click',()=>{document.getElementById('q').value='';document.getElementById('cat').value='';document.getElementById('sizeUS').value='';document.getElementById('sizeEU').value='';onlyAvail=false;document.getElementById('avail').textContent='Solo disponibles';render();});
 document.getElementById('avail').addEventListener('click',e=>{onlyAvail=!onlyAvail;e.target.textContent=onlyAvail?'Mostrar todos':'Solo disponibles';render();});
 load();
 </script>
